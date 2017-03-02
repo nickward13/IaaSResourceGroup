@@ -58,7 +58,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "hectagonlbip",
+      "name": "[variables('lbPIPName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
@@ -140,13 +140,13 @@
             "name": "hectagonlbrule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/loadBalancers/frontendIPConfigurations', 'hectagonlb', 'hectagonlbfeipconfig')]"
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), 'hectagonlbfeipconfig')]"
               },
               "backendAddressPool": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/loadBalancers/backendAddressPools', 'hectagonlb', 'hectagonlbbeap')]"
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), 'hectagonlbbeap')]"
               },
               "probe": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/loadBalancers/probes', 'hectagonlb', 'hectagonlbprobe')]"
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/loadBalancers/probes', variables('lbName'), 'hectagonlbprobe')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -157,7 +157,7 @@
       },
       "dependsOn": [
         "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-        "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', 'hectagonlbip')]"
+        "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', variables('lbPIPName'))]"
       ],
       "tags": {
         "displayName": "LoadBalancer"
@@ -344,13 +344,13 @@
             "properties": {
               "ruleType": "basic",
               "backendAddressPool": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/backendAddressPools', 'hectagonappgateway', 'appgatewaybackendaddresspool')]"
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'appgatewaybackendaddresspool')]"
               },
               "backendHttpSettings": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'hectagonappgateway', 'appgatewaybackendhttpsettings')]"
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'appgatewaybackendhttpsettings')]"
               },
               "httpListener": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/httpListeners', 'hectagonappgateway', 'appgatewayhttplistener')]"
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'appgatewayhttplistener')]"
               }
             }
           }
