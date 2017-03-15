@@ -3,7 +3,6 @@
     "contentVersion": "1.0.0.0",
   "parameters": {
     "vmsize": { "value": "Standard_A0" },
-    "adminUserName": { "value": "vmadminuser" },
-    "adminPassword": {"value": ""}
+    "adminUserName": { "value": "vmadminuser" }
   }
 }

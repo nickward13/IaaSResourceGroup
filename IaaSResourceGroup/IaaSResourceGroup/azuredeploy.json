@@ -291,7 +291,7 @@
           }
         },
         "osProfile": {
-          "computerName": "[variables('vmName')]",
+          "computerName": "[variables('linuxVmName')]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
