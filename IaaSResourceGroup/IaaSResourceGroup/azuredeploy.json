@@ -7,16 +7,19 @@
     "adminPassword": {"type": "securestring"}
   },
   "variables": {
-    "storageAccountName": "[concat('hectstor', toLower(resourceGroup().name))]",
+    "storageAccountName": "[concat('hectstor', uniqueString(resourceGroup().id))]",
     "vmPIPName": "[concat('hectpip', toLower(resourceGroup().name))]",
-    "gatewayPIPName": "[concat('hectgwpip', toLower(resourceGroup().name)]",
-    "lbPIPName": "[concat('hectlbpip', toLower(resourceGroup().name)]",
+    "linuxVmPIPName": "[concat('hectlinuxpip', toLower(resourceGroup().name))]",
+    "gatewayPIPName": "[concat('hectgwpip', toLower(resourceGroup().name))]",
+    "lbPIPName": "[concat('hectlbpip', toLower(resourceGroup().name))]",
     "nicName": "[concat('hectnic', toLower(resourceGroup().name))]",
+    "linuxNicName": "[concat('hectlinuxnic', toLower(resourceGroup().name))]",
     "vnetName": "[concat('hectnet', toLower(resourceGroup().name))]",
     "lbName": "[concat('hectlb', toLower(resourceGroup().name))]",
     "vmName": "backendserver",
+    "linuxVmName": "linuxserver",
     "appGatewayName": "[concat('hectgw', toLower(resourceGroup().name))]",
-    "webFarmName":  "[concat('hectweb', toLower(resourceGroup().name))]"
+    "webFarmName": "[concat('hectweb', toLower(resourceGroup().name))]"
   },
   "resources": [
     {
@@ -28,7 +31,7 @@
         "accountType": "Standard_LRS"
       },
       "tags": {
-        "displayName":  "StorageAccount"
+        "displayName": "StorageAccount"
       }
     },
     {
@@ -41,6 +44,18 @@
       },
       "tags": {
         "displayName": "PIPAddress"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('linuxVmPIPName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      },
+      "tags": {
+        "displayName": "Linux PIPAddress"
       }
     },
     {
@@ -100,7 +115,7 @@
         ]
       },
       "tags": {
-        "displayName":  "VNet"
+        "displayName": "VNet"
       }
     },
     {
@@ -193,6 +208,35 @@
       }
     },
     {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "name": "[variables('linuxNicName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'frontend')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', variables('linuxVmPIPName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', variables('linuxVmPIPName'))]"
+      ],
+      "tags": {
+        "displayName": "Linux NIC"
+      }
+    },
+    {
       "type": "Microsoft.Compute/availabilitySets",
       "apiVersion": "2016-04-30-preview",
       "name": "vmas",
@@ -203,6 +247,72 @@
       },
       "tags": {
         "displayName": "VMAvailabilitySet"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2016-04-30-preview",
+      "name": "vmlas",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 5
+      },
+      "tags": {
+        "displayName": "VMAvailabilitySet"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2016-04-30-preview",
+      "name": "[variables('linuxVmName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId(resourceGroup().name, 'Microsoft.Compute/availabilitySets', 'vmlas')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmsize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "canonical",
+            "offer": "ubuntuserver",
+            "sku": "16.10",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk2",
+            "vhd": {
+              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/osdisk2.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkInterfaces', variables('linuxNicName'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.Network/networkInterfaces', variables('linuxNicName'))]",
+        "[resourceId(resourceGroup().name, 'Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId(resourceGroup().name, 'Microsoft.Compute/availabilitySets', 'vmlas')]"
+      ],
+      "tags": {
+        "displayName": "Linux VM"
       }
     },
     {
@@ -364,7 +474,7 @@
       "type": "Microsoft.Compute/VirtualMachineScaleSets",
       "apiVersion": "2016-04-30-preview",
       "name": "[variables('webFarmName')]",
-      "location": "[resourceGroup().name]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId(resourceGroup().name, 'Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
