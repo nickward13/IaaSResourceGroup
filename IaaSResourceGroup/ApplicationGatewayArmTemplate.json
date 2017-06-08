@@ -1,0 +1,129 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+    "appGatewayName": "[concat('hectgw', toLower(resourceGroup().name))]",
+    "vnetName": "[concat('hectnet', toLower(resourceGroup().name))]",
+    "gatewayPIPName": "[concat('hectgwpip', toLower(resourceGroup().name))]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('gatewayPIPName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      },
+      "tags": {
+        "displayName": "GatewayPIPAddress"
+      }
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2016-09-01",
+      "name": "[variables('appGatewayName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', variables('gatewayPIPName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "Standard_Small",
+          "tier": "Standard",
+          "capacity": 1
+        },
+        "gatewayIPConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'appgateway')]"
+              }
+            },
+            "name": "appgatewayipconfig"
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', variables('gatewayPIPName'))]"
+              }
+            },
+            "name": "appgatewayfrontendipconfig"
+          }
+        ],
+        "frontendPorts": [
+          {
+            "properties": {
+              "port": 80
+            },
+            "name": "appgatewayfrontendport"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "properties": {
+              "backendAddresses": [
+                {
+                  "ipAddress": "134.170.185.46"
+                }
+              ]
+            },
+            "name": "appgatewaybackendaddresspool"
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appgatewaybackendhttpsettings",
+            "properties": {
+              "port": "80",
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled"
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appgatewayhttplistener",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/frontendIpConfigurations', variables('appGatewayName') , 'appgatewayfrontendipconfig')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/frontendPorts', variables('appGatewayName'), 'appgatewayfrontendport')]"
+              },
+              "protocol": "Http"
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "appgatewayrequestroutingrules",
+            "properties": {
+              "ruleType": "basic",
+              "backendAddressPool": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'appgatewaybackendaddresspool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'appgatewaybackendhttpsettings')]"
+              },
+              "httpListener": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'appgatewayhttplistener')]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "ApplicationGateway"
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
