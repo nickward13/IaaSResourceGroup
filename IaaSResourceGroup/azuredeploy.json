@@ -355,7 +355,7 @@
         "displayName": "BackendServerVM"
       }
     },
-  
+
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "apiVersion": "2016-04-30-preview",
@@ -431,6 +431,18 @@
       },
       "tags": {
         "displayName": "WebFarmVMSS"
+      }
+    },
+    {
+      "apiVersion": "2016-02-01",
+      "name": "ApplicationGatewayArmTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/nickward13/IaaSResourceGroup/master/IaaSResourceGroup/ApplicationGatewayArmTemplate.json",
+          "contentVersion": "1.0.0.0"
+        }
       }
     }
   ],
