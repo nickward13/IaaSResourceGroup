@@ -5,9 +5,8 @@
   },
   "variables": {
     "appGatewayName": "[concat('hectgw', toLower(resourceGroup().name))]",
-    "vnetName": "[concat('hectnet', toLower(resourceGroup().name))]",
-    "gatewayPIPName": "[concat('hectgwpip', toLower(resourceGroup().name))]"
-
+    "gatewayPIPName": "[concat('hectgwpip', toLower(resourceGroup().name))]",
+    "vnetName": "[concat('hectnet', toLower(resourceGroup().name))]"
   },
   "resources": [
     {
@@ -40,7 +39,7 @@
           {
             "properties": {
               "subnet": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'appgateway')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'appgateway')]"
               }
             },
             "name": "appgatewayipconfig"
