@@ -443,7 +443,10 @@
           "uri": "https://raw.githubusercontent.com/nickward13/IaaSResourceGroup/master/IaaSResourceGroup/ApplicationGatewayArmTemplate.json",
           "contentVersion": "1.0.0.0"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
     }
   ],
   "outputs": {}
